@@ -24,12 +24,18 @@ export class TodosService {
     search?: string;
     status?: 'all' | 'active' | 'completed';
     priority?: string;
+    studentName?: string;
   }): Promise<Todo[]> {
     const filter: Record<string, any> = {};
 
     if (query?.search && query.search.trim() !== '') {
       const searchRegex = new RegExp(query.search.trim(), 'i');
-      filter.$or = [{ title: searchRegex }, { description: searchRegex }];
+      filter.$or = [
+        { title: searchRegex },
+        { description: searchRegex },
+        { lessonContent: searchRegex },
+        { studentName: searchRegex },
+      ];
     }
 
     if (query?.status === 'active') {
@@ -42,10 +48,22 @@ export class TodosService {
       filter.priority = query.priority;
     }
 
+    if (query?.studentName && query.studentName !== 'all') {
+      filter.studentName = query.studentName;
+    }
+
     return this.todoModel
       .find(filter)
-      .sort({ isCompleted: 1, createdAt: -1 })
+      .sort({ date: -1, createdAt: -1 })
       .exec();
+  }
+
+  async getStudents(): Promise<string[]> {
+    const distinct = await this.todoModel.distinct('studentName').exec();
+    const list = Array.from(
+      new Set(['Trường', 'Nguyệt', ...(distinct || []).filter(Boolean)]),
+    );
+    return list;
   }
 
   async findOne(id: string): Promise<Todo> {
@@ -96,20 +114,52 @@ export class TodosService {
     active: number;
     completed: number;
     highPriority: number;
+    studentStats: Record<string, { total: number; completed: number }>;
+    students: string[];
   }> {
-    const [total, completed, highPriority] = await Promise.all([
-      this.todoModel.countDocuments().exec(),
-      this.todoModel.countDocuments({ isCompleted: true }).exec(),
-      this.todoModel
-        .countDocuments({ priority: TodoPriority.HIGH, isCompleted: false })
-        .exec(),
-    ]);
+    const [total, completed, highPriority, distinctStudents, grouped] =
+      await Promise.all([
+        this.todoModel.countDocuments().exec(),
+        this.todoModel.countDocuments({ isCompleted: true }).exec(),
+        this.todoModel
+          .countDocuments({ priority: TodoPriority.HIGH, isCompleted: false })
+          .exec(),
+        this.getStudents(),
+        this.todoModel.aggregate([
+          {
+            $group: {
+              _id: '$studentName',
+              total: { $sum: 1 },
+              completed: {
+                $sum: { $cond: [{ $eq: ['$isCompleted', true] }, 1, 0] },
+              },
+            },
+          },
+        ]),
+      ]);
+
+    const studentStats: Record<string, { total: number; completed: number }> =
+      {};
+
+    distinctStudents.forEach((name) => {
+      studentStats[name] = { total: 0, completed: 0 };
+    });
+
+    grouped.forEach((g: any) => {
+      const key = g._id || 'Khác';
+      studentStats[key] = {
+        total: g.total,
+        completed: g.completed,
+      };
+    });
 
     return {
       total,
       active: total - completed,
       completed,
       highPriority,
+      studentStats,
+      students: distinctStudents,
     };
   }
 

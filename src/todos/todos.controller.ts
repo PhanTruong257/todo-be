@@ -35,22 +35,30 @@ export class TodosController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Lấy danh sách công việc (có tìm kiếm và lọc)' })
-  @ApiQuery({ name: 'search', required: false, description: 'Từ khóa tìm kiếm theo tiêu đề hoặc mô tả' })
+  @ApiOperation({ summary: 'Lấy danh sách công việc / báo cáo (có tìm kiếm và lọc)' })
+  @ApiQuery({ name: 'search', required: false, description: 'Từ khóa tìm kiếm theo tiêu đề hoặc mô tả hoặc nội dung' })
   @ApiQuery({ name: 'status', required: false, enum: ['all', 'active', 'completed'], description: 'Trạng thái công việc' })
   @ApiQuery({ name: 'priority', required: false, enum: ['all', 'low', 'medium', 'high'], description: 'Mức độ ưu tiên' })
+  @ApiQuery({ name: 'studentName', required: false, description: 'Lọc theo tên người học (ví dụ: Trường, Nguyệt)' })
   findAll(
     @Query('search') search?: string,
     @Query('status') status?: 'all' | 'active' | 'completed',
     @Query('priority') priority?: string,
+    @Query('studentName') studentName?: string,
   ) {
-    return this.todosService.findAll({ search, status, priority });
+    return this.todosService.findAll({ search, status, priority, studentName });
   }
 
   @Get('stats')
-  @ApiOperation({ summary: 'Lấy thống kê số lượng công việc' })
+  @ApiOperation({ summary: 'Lấy thống kê số lượng công việc và tiến độ từng người học' })
   getStats() {
     return this.todosService.getStats();
+  }
+
+  @Get('students')
+  @ApiOperation({ summary: 'Lấy danh sách tất cả người học' })
+  getStudents() {
+    return this.todosService.getStudents();
   }
 
   @Get(':id')

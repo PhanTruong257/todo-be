@@ -53,4 +53,46 @@ export class CreateTodoDto {
   @IsString({ each: true })
   @IsOptional()
   tags?: string[];
+
+  // --- Báo cáo học tiếng Anh hàng ngày ---
+  @ApiPropertyOptional({
+    description: 'Tên người học (ví dụ: Trường, Nguyệt)',
+    example: 'Trường',
+    default: 'Trường',
+  })
+  @IsString()
+  @IsOptional()
+  studentName?: string;
+
+  @ApiPropertyOptional({
+    description: 'Ngày học (YYYY-MM-DD)',
+    example: '2026-10-11',
+  })
+  @IsString()
+  @IsOptional()
+  date?: string;
+
+  @ApiPropertyOptional({
+    description: 'Giờ bắt đầu học (HH:mm)',
+    example: '20:00',
+  })
+  @IsString()
+  @IsOptional()
+  startTime?: string;
+
+  @ApiPropertyOptional({
+    description: 'Giờ kết thúc học (HH:mm)',
+    example: '21:30',
+  })
+  @IsString()
+  @IsOptional()
+  endTime?: string;
+
+  @ApiPropertyOptional({
+    description: 'Nội dung buổi học (Hôm nay học những gì)',
+    example: 'Học 40 từ vựng Unit 4, luyện nghe IELTS Section 2',
+  })
+  @IsString()
+  @IsOptional()
+  lessonContent?: string;
 }

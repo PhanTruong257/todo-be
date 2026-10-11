@@ -44,6 +44,22 @@ export class Todo {
   @Prop({ type: [String], default: [] })
   tags: string[];
 
+  // --- Báo cáo học tiếng Anh hàng ngày ---
+  @Prop({ default: 'Trường', trim: true })
+  studentName: string;
+
+  @Prop({ default: '', trim: true })
+  date: string;
+
+  @Prop({ default: '', trim: true })
+  startTime: string;
+
+  @Prop({ default: '', trim: true })
+  endTime: string;
+
+  @Prop({ default: '', trim: true })
+  lessonContent: string;
+
   createdAt?: Date;
   updatedAt?: Date;
 }
