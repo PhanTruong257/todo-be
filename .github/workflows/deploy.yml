@@ -1,0 +1,41 @@
+name: Deploy Backend to AWS EC2
+
+on:
+  push:
+    tags:
+      - 'v*' # Tự động kích hoạt khi tạo tag phiên bản: v1.0.0, v1.0.1, v2.0.0...
+
+jobs:
+  deploy:
+    name: Deploy Docker to EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🚀 SSH vào EC2 và Cập Nhật Docker Container
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER || 'ubuntu' }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "📥 Đang cập nhật mã nguồn theo Git Tag: ${{ github.ref_name }}..."
+            cd ~/todo-be
+            git fetch --all --tags
+            git checkout tags/${{ github.ref_name }}
+
+            echo "🔨 Đang đóng gói Docker Image mới..."
+            sudo docker build -t todo-backend .
+
+            echo "🔄 Khởi động lại container todo-api..."
+            sudo docker stop todo-api || true
+            sudo docker rm todo-api || true
+            sudo docker run -d \
+              --name todo-api \
+              -p 4000:4000 \
+              --restart always \
+              -e PORT=4000 \
+              -e MONGODB_URI="${{ secrets.MONGODB_URI }}" \
+              todo-backend
+
+            echo "✅ TRIỂN KHAI THÀNH CÔNG! Trạng thái container:"
+            sudo docker ps | grep todo-api
