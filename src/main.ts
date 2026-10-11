@@ -14,6 +14,9 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // Thiết lập tiền tố toàn cục /api cho tất cả REST API endpoints
+  app.setGlobalPrefix('api');
+
   // Tự động kiểm tra và chuyển đổi dữ liệu (Validation DTO)
   app.useGlobalPipes(
     new ValidationPipe({
